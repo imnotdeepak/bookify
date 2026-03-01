@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 
 import "./globals.css";
 import Navbar from "../components/Navbar";
+import { Toaster } from "sonner";
 
 const ibmPlexSans = IBM_Plex_Sans({
   variable: "--font-ibm-plex-sans",
@@ -36,6 +37,7 @@ export default function RootLayout({
         >
           <Navbar />
           {children}
+          <Toaster />
         </body>
       </html>
     </ClerkProvider>
