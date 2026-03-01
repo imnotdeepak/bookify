@@ -82,11 +82,11 @@ export const formatDuration = (seconds: number): string => {
 
 export async function parsePDFFile(file: File) {
   try {
-    const pdfjsLib = await import("pdfjs-dist");
+    const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
 
     if (typeof window !== "undefined") {
       pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-        "pdfjs-dist/build/pdf.worker.min.mjs",
+        "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
         import.meta.url,
       ).toString();
     }
@@ -122,8 +122,8 @@ export async function parsePDFFile(file: File) {
       const page = await pdfDocument.getPage(pageNum);
       const textContent = await page.getTextContent();
       const pageText = textContent.items
-        .filter((item) => "str" in item)
-        .map((item) => (item as { str: string }).str)
+        .filter((item: { str?: string }) => typeof item.str === "string")
+        .map((item: { str?: string }) => item.str ?? "")
         .join(" ");
       fullText += pageText + "\n";
     }
