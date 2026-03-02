@@ -1,6 +1,8 @@
-export const BRAND_COLOR = "#212a3b";
-export const BRAND_COLOR_HOVER = "#3d485e";
+// Brand color - used in JS files where CSS variables aren't available
+export const BRAND_COLOR = "#212a3b"; // Dark blue-gray
+export const BRAND_COLOR_HOVER = "#3d485e"; // Medium blue-gray
 
+// Sample books for the homepage (using Open Library covers)
 export const sampleBooks = [
   {
     _id: "1",
@@ -84,6 +86,7 @@ export const sampleBooks = [
   },
 ];
 
+// File validation helpers
 export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 export const ACCEPTED_PDF_TYPES = ["application/pdf"];
 export const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -94,9 +97,13 @@ export const ACCEPTED_IMAGE_TYPES = [
   "image/webp",
 ];
 
+// Pre-configured VAPI assistant ID (hardcoded for this app)
 export const ASSISTANT_ID = process.env.NEXT_PUBLIC_ASSISTANT_ID!;
 
+// 11Labs Voice IDs - Optimized for conversational AI
+// Voices selected for natural, engaging book conversations
 export const voiceOptions = {
+  // Male voices
   dave: {
     id: "CYw3kZ02Hs0563khs1Fj",
     name: "Dave",
@@ -112,6 +119,7 @@ export const voiceOptions = {
     name: "Chris",
     description: "Male, casual & easy-going",
   },
+  // Female voices
   rachel: {
     id: "21m00Tcm4TlvDq8ikWAM",
     name: "Rachel",
@@ -124,22 +132,29 @@ export const voiceOptions = {
   },
 };
 
+// Voice categories for the selector UI
 export const voiceCategories = {
   male: ["dave", "daniel", "chris"],
   female: ["rachel", "sarah"],
 };
 
+// Default voice
 export const DEFAULT_VOICE = "rachel";
 
+// ElevenLabs voice settings optimized for conversational AI
 export const VOICE_SETTINGS = {
-  stability: 0.45,
-  similarityBoost: 0.75,
-  style: 0,
-  useSpeakerBoost: true,
-  speed: 1.0,
+  stability: 0.45, // Lower for more emotional, dynamic delivery (0.30-0.50 is natural)
+  similarityBoost: 0.75, // Enhances clarity without distortion
+  style: 0, // Keep at 0 for conversational AI (higher = more latency, less stable)
+  useSpeakerBoost: true, // Improves voice quality
+  speed: 1.0, // Natural conversation speed
 };
 
+// VAPI configuration for natural conversation
+// NOTE: These settings should be configured in the VAPI Dashboard for the assistant
+// They are kept here for reference and documentation purposes
 export const VAPI_DASHBOARD_CONFIG = {
+  // Turn-taking settings
   startSpeakingPlan: {
     smartEndpointingEnabled: true,
     waitSeconds: 0.4,
@@ -149,14 +164,18 @@ export const VAPI_DASHBOARD_CONFIG = {
     voiceSeconds: 0.2,
     backoffSeconds: 1.0,
   },
+  // Timing settings
   silenceTimeoutSeconds: 30,
   responseDelaySeconds: 0.4,
   llmRequestDelaySeconds: 0.1,
+  // Conversation features
   backgroundDenoisingEnabled: true,
   backchannelingEnabled: true,
   fillerInjectionEnabled: false,
 };
 
+// Clerk appearance overrides - Warm Literary Style
+// Note: Tailwind requires static class names at build time, so we hardcode color values here
 export const CLERK_AUTH_APPEARANCE_OVERRIDE = {
   rootBox: "mx-auto",
   card: "shadow-none border-none rounded-xl bg-transparent",

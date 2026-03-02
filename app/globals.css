@@ -816,6 +816,23 @@
   gap: 20px !important;
 }
 
+@media (min-width: 1024px) {
+  .clerk-pricing-table-wrapper [data-clerk-component="PricingTable"] > div,
+  .clerk-pricing-table-wrapper > div,
+  .clerk-pricing-table-wrapper > div > div {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(280px, 1fr)) !important;
+    gap: 24px !important;
+    justify-items: center !important;
+  }
+
+  .clerk-pricing-table-wrapper .cl-pricingTableCard,
+  .clerk-pricing-table-wrapper > div > div > div {
+    width: 100% !important;
+    max-width: 380px !important;
+  }
+}
+
 /* Individual cards */
 .clerk-pricing-table-wrapper > div > div > div {
   position: relative;

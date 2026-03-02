@@ -6,13 +6,23 @@ import { escapeRegex, generateSlug, serializeData } from "@/lib/utils";
 import Book from "@/database/models/book.model";
 import BookSegment from "@/database/models/book-segment.model";
 import mongoose from "mongoose";
-import { revalidatePath } from "next/cache";
+import { getUserPlan } from "@/lib/subscription.server";
 
-export const getAllBooks = async () => {
+export const getAllBooks = async (search?: string) => {
   try {
     await connectToDatabase();
 
-    const books = await Book.find().sort({ createdAt: -1 }).lean();
+    let query = {};
+
+    if (search) {
+      const escapedSearch = escapeRegex(search);
+      const regex = new RegExp(escapedSearch, "i");
+      query = {
+        $or: [{ title: { $regex: regex } }, { author: { $regex: regex } }],
+      };
+    }
+
+    const books = await Book.find(query).sort({ createdAt: -1 }).lean();
 
     return {
       success: true,
@@ -70,9 +80,38 @@ export const createBook = async (data: CreateBook) => {
       };
     }
 
-    const book = await Book.create({ ...data, slug, totalSegments: 0 });
+    const { getUserPlan } = await import("@/lib/subscription.server");
+    const { PLAN_LIMITS } = await import("@/lib/subscription-constants");
 
-    revalidatePath("/");
+    const { auth } = await import("@clerk/nextjs/server");
+    const { userId } = await auth();
+
+    if (!userId || userId !== data.clerkId) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const plan = await getUserPlan();
+    const limits = PLAN_LIMITS[plan];
+
+    const bookCount = await Book.countDocuments({ clerkId: userId });
+
+    if (bookCount >= limits.maxBooks) {
+      const { revalidatePath } = await import("next/cache");
+      revalidatePath("/");
+
+      return {
+        success: false,
+        error: `You have reached the maximum number of books allowed for your ${plan} plan (${limits.maxBooks}). Please upgrade to add more books.`,
+        isBillingError: true,
+      };
+    }
+
+    const book = await Book.create({
+      ...data,
+      clerkId: userId,
+      slug,
+      totalSegments: 0,
+    });
 
     return {
       success: true,
@@ -152,6 +191,7 @@ export const saveBookSegments = async (
   }
 };
 
+// Searches book segments using MongoDB text search with regex fallback
 export const searchBookSegments = async (
   bookId: string,
   query: string,
@@ -164,6 +204,7 @@ export const searchBookSegments = async (
 
     const bookObjectId = new mongoose.Types.ObjectId(bookId);
 
+    // Try MongoDB text search first (requires text index)
     let segments: Record<string, unknown>[] = [];
     try {
       segments = await BookSegment.find({
@@ -175,19 +216,14 @@ export const searchBookSegments = async (
         .limit(limit)
         .lean();
     } catch {
+      // Text index may not exist — fall through to regex fallback
       segments = [];
     }
 
+    // Fallback: regex search matching ANY keyword
     if (segments.length === 0) {
       const keywords = query.split(/\s+/).filter((k) => k.length > 2);
       const pattern = keywords.map(escapeRegex).join("|");
-
-      if (keywords.length === 0) {
-        return {
-          success: true,
-          data: [],
-        };
-      }
 
       segments = await BookSegment.find({
         bookId: bookObjectId,
