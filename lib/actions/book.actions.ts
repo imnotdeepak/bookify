@@ -122,7 +122,7 @@ export const createBook = async (data: CreateBook) => {
 
     return {
       success: false,
-      error: e,
+      error: e instanceof Error ? e.message : "Unknown error",
     };
   }
 };
