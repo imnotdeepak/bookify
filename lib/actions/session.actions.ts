@@ -21,20 +21,47 @@ export const startVoiceSession = async (
     const limits = PLAN_LIMITS[plan];
     const billingPeriodStart = getCurrentBillingPeriodStart();
 
-    const sessionCount = await VoiceSession.countDocuments({
-      clerkId,
-      billingPeriodStart,
-    });
+    if (Number.isFinite(limits.maxSessionsPerMonth)) {
+      const sessionCount = await VoiceSession.countDocuments({
+        clerkId,
+        billingPeriodStart,
+      });
 
-    if (sessionCount >= limits.maxSessionsPerMonth) {
-      const { revalidatePath } = await import("next/cache");
-      revalidatePath("/");
+      if (sessionCount >= limits.maxSessionsPerMonth) {
+        const { revalidatePath } = await import("next/cache");
+        revalidatePath("/");
 
-      return {
-        success: false,
-        error: `You have reached the monthly session limit for your ${plan} plan (${limits.maxSessionsPerMonth}). Please upgrade for more sessions.`,
-        isBillingError: true,
-      };
+        return {
+          success: false,
+          error: `You have reached the monthly session limit for your ${plan} plan (${limits.maxSessionsPerMonth}). Please upgrade for more sessions.`,
+          isBillingError: true,
+        };
+      }
+    }
+
+    let remainingSeconds = limits.maxDurationPerSession * 60;
+    if (plan === "free") {
+      const totals = await VoiceSession.aggregate<{
+        totalSeconds: number;
+      }>([
+        { $match: { clerkId, billingPeriodStart } },
+        { $group: { _id: null, totalSeconds: { $sum: "$durationSeconds" } } },
+      ]);
+
+      const usedSeconds = totals[0]?.totalSeconds ?? 0;
+      remainingSeconds = Math.max(0, remainingSeconds - usedSeconds);
+
+      if (remainingSeconds <= 0) {
+        const { revalidatePath } = await import("next/cache");
+        revalidatePath("/");
+
+        return {
+          success: false,
+          error:
+            "You've used your 5 minutes for this month on the free plan. Upgrade to keep listening.",
+          isBillingError: true,
+        };
+      }
     }
 
     const session = await VoiceSession.create({
@@ -48,7 +75,7 @@ export const startVoiceSession = async (
     return {
       success: true,
       sessionId: session._id.toString(),
-      maxDurationMinutes: limits.maxDurationPerSession,
+      maxDurationMinutes: remainingSeconds / 60,
     };
   } catch (e) {
     console.error("Error starting voice session", e);

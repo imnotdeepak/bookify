@@ -58,6 +58,11 @@ export function useVapi(book: IBook) {
   const [currentMessage, setCurrentMessage] = useState("");
   const [currentUserMessage, setCurrentUserMessage] = useState("");
   const [duration, setDuration] = useState(0);
+  const [maxDurationSeconds, setMaxDurationSeconds] = useState(
+    limits?.maxDurationPerSession
+      ? limits.maxDurationPerSession * 60
+      : 15 * 60,
+  );
   const [limitError, setLimitError] = useState<string | null>(null);
   const [isBillingError, setIsBillingError] = useState(false);
 
@@ -67,12 +72,17 @@ export function useVapi(book: IBook) {
   const isStoppingRef = useRef(false);
 
   // Keep refs in sync with latest values for use in callbacks
-  const maxDurationSeconds = limits?.maxDurationPerSession
-    ? limits.maxDurationPerSession * 60
-    : 15 * 60;
   const maxDurationRef = useLatestRef(maxDurationSeconds);
   const durationRef = useLatestRef(duration);
   const voice = book.persona || DEFAULT_VOICE;
+
+  useEffect(() => {
+    setMaxDurationSeconds(
+      limits?.maxDurationPerSession
+        ? limits.maxDurationPerSession * 60
+        : 15 * 60,
+    );
+  }, [limits?.maxDurationPerSession]);
 
   useEffect(() => {
     const handlers = {
@@ -271,6 +281,9 @@ export function useVapi(book: IBook) {
       }
 
       sessionIdRef.current = result.sessionId || null;
+      if (result.maxDurationMinutes) {
+        setMaxDurationSeconds(result.maxDurationMinutes * 60);
+      }
 
       const firstMessage = `Hey, good to meet you. Quick question before we dive in - have you actually read ${book.title} yet, or are we starting fresh?`;
 
