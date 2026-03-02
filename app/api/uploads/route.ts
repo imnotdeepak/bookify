@@ -8,10 +8,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const body = (await request.json()) as HandleUploadBody;
 
     const jsonResponse = await handleUpload({
-      token:
-        process.env.bookify_READ_WRITE_TOKEN ??
-        process.env.BLOB_READ_WRITE_TOKEN ??
-        process.env.VERCEL_BLOB_READ_WRITE_TOKEN,
+      token: process.env.bookify_READ_WRITE_TOKEN,
       body,
       request,
       onBeforeGenerateToken: async () => {
